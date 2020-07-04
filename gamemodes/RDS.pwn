@@ -1924,9 +1924,9 @@ public OnPlayerConnect(playerid)
 		strdel(banst, 0, 128);//сборка RCON-команды бана
 		strcat(banst, "banip ");
 		strcat(banst, PlayerInfo[playerid][pIPAdr]);
+		Kick(playerid);
 		SendRconCommand(banst);//RCON-команда бана
 		SendRconCommand("reloadbans");//RCON-команда перезагрузки бан-листа
-		SetTimerEx("PlayKick", 300, 0, "i", playerid);
 //		Ban(playerid);
 		return 1;
 	}
@@ -1955,9 +1955,9 @@ public OnPlayerConnect(playerid)
 		strdel(banst, 0, 128);//сборка RCON-команды бана
 		strcat(banst, "banip ");
 		strcat(banst, PlayerInfo[playerid][pIPAdr]);
+		Kick(playerid);
 		SendRconCommand(banst);//RCON-команда бана
 		SendRconCommand("reloadbans");//RCON-команда перезагрузки бан-листа
-		SetTimerEx("PlayKick", 300, 0, "i", playerid);
 //		Ban(playerid);
 		return 1;
 	}
@@ -5295,7 +5295,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		SendClientMessage(playerid,COLOR_GREEN,"   /resdr   /statdr [ид]   /a [текст]   /wantv   /fine   /statpl 600");
 		SendClientMessage(playerid,COLOR_GREEN,"   /statpl [ид]   /scrmd [режим]   /mmd   /svt   /rdt   /g [текст]");
 		SendClientMessage(playerid,COLOR_GREEN,"   /p [текст]   /report [ид нарушителя] [жалоба]   /dt [виртуальный мир]");
-		SendClientMessage(playerid,COLOR_GREEN,"   /rules   /openpm [0-запретить, 1-разрешить]   /hh   /bb");
+		SendClientMessage(playerid,COLOR_GREEN,"   /rules   /openpm [0-запретить, 1-разрешить]   /hh   /bb   /ocam");
 		SendClientMessage(playerid,COLOR_GRAD1," ------------------------------------------------------------------------------------------ ");
 
 		format(strdln, sizeof(strdln), "/help - Помощь по командам\
@@ -5332,7 +5332,8 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		\n/openpm [0-запретить, 1-разрешить] - Запретить / разрешить", strdln);
 		format(strdln, sizeof(strdln), "%s\n		для себя приём личных сообщений ( PM )\
 		\n/hh - Поприветствовать всех игроков\
-		\n/bb - Попрощаться со всеми игроками", strdln);
+		\n/bb - Попрощаться со всеми игроками\
+		\n/ocam - Админ-меню оперативных команд", strdln);
 		ShowPlayerDialog(playerid, 2, 0, "Помощь по командам", strdln, "OK", "");
 		SetPVarInt(playerid, "DlgCont", 2);
 
@@ -15113,6 +15114,52 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		}
 		return 1;
     }
+	if(strcmp(cmd, "/ocam", true) == 0)
+	{
+		if(PlayerInfo[playerid][pAdmin] >= 1 || PlayerInfo[playerid][pPolice] >= 2)
+		{
+			tmp = strtok(cmdtext, idx);
+			if(!strlen(tmp))
+			{
+				SendClientMessage(playerid, COLOR_GRAD2, " Используйте: /ocam [ид игрока]");
+				return 1;
+			}
+			new para1;
+			para1 = strval(tmp);
+ 			if(IsPlayerConnected(para1))
+ 			{
+			    player[playerid] = para1;
+				format(playtarget[playerid], MAX_PLAYER_NAME, "%s", RealName[player[playerid]]);
+			    if(((PlayerInfo[playerid][pAdmin] >= 1 && PlayerInfo[playerid][pAdmin] <= 10) || PlayerInfo[playerid][pPolice] >= 2) && PlayerInfo[player[playerid]][pAdmin] >= 11)
+				{
+					ShowPlayerDialog(playerid,2,0,"Информация.","Выбранный игрок защищён !","OK","");
+					SetPVarInt(playerid, "DlgCont", 2);
+					return 1;
+				}
+				new stringdd[128];
+				new strdlndd[1024];
+				format(strdlndd,sizeof(strdlndd),"Тп к нему (1)\nТп его к себе (1)\nНаблюдать (1)\nСнять наблюдение (1)\
+				\nПополнить жизнь и броню (2)\nБан постоянный (6)\nБан временный (5)\nКик (3)\nДепортировать (4)\
+				\nОтменить депортацию (4)\nЗаблокировать (1)\nРазблокировать (1)\nЗаморозить (1)\nРазморозить (1)\nУбить (2)\
+				\nЗаткнуть (1)\nПосадить в тюрьму (1)");
+				format(strdlndd,sizeof(strdlndd),"%s\nТп себя в тюрьму (1)\nТп себя в полицейский участок (1)\
+				\nПросмотреть статистику (1)\nСменить скин (2)\nУзнать IP (1)\nСлапнуть (2)\nПодключить к дрифт-соревнованию (1)\
+				\nОтключить от дрифт-соревнования (1)\nОбнулить очки дрифт-соревнования (1)\nСтатус дрифт-соревнования (1)", strdlndd);
+				format(stringdd,sizeof(stringdd),"Админ-меню. ( %s [%d] )",playtarget[playerid],player[playerid]);
+				ShowPlayerDialog(playerid,5,DIALOG_STYLE_LIST,stringdd,strdlndd,"Выбор","Отмена");
+				SetPVarInt(playerid, "DlgCont", 5);
+			}
+			else
+			{
+				SendClientMessage(playerid, COLOR_RED, " Такого [ид игрока] на сервере нет !");
+			}
+		}
+		else
+		{
+			SendClientMessage(playerid, COLOR_RED, " Для доступа к админ-меню Вам нужно иметь 2-LVL полиции, или быть админом !");
+		}
+		return 1;
+ 	}
 
 //------------------------------ BusSystem -------------------------------------
 	if(strcmp(cmd, "/helpbus", true) == 0)
