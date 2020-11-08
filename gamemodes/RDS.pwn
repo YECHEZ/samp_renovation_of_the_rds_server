@@ -1026,6 +1026,7 @@ new nick5col = 0;//переменная таймера FunNickCol
 new tpspa;//случайный индекс выборки из массива координат спавна игрока
 new col4car;//номер случайного цвета при спавне транспорта
 new playcar[MAX_PLAYERS];//ид транспорта игрока
+new playcarvw[5000];//виртуальный мир транспорта игрока
 //new hour, minute;
 new gPlayerAccount[MAX_PLAYERS];
 new gPlayerLogged[MAX_PLAYERS];
@@ -1331,6 +1332,11 @@ public OnGameModeInit()
 		TrainID22[i] = TrainID[i] + 3;
 	}
 	pertrain = 1;//разрешить всем игрокам водить поезда
+
+	for(new i = 0; i < 5000; i++)
+	{
+		playcarvw[i] = -100;//обнулить виртуальный мир транспорта игрока
+	}
 
 	Times = TextDrawCreate(551.000000, 23.000000, "--");
 	TextDrawBackgroundColor(Times, 255);
@@ -2446,6 +2452,7 @@ public OnPlayerDisconnect(playerid, reason)
 				migalka[i][1] = 0;//несуществующий ид транспорта с мигалкой
  			}
 		}
+		playcarvw[playcar[playerid]] = -100;//обнулить виртуальный мир транспорта игрока
 		DestroyVehicle(playcar[playerid]);//уничтожить свой транспорт
 		playcar[playerid] = 0;//несуществующий ид транспорта
 	}
@@ -3081,6 +3088,14 @@ public OnPlayerDeath(playerid, killerid, reason)
 public OnVehicleSpawn(vehicleid)
 {
 //	SetVehicleToRespawn(vehicleid);
+	if(playcarvw[vehicleid] != -100)
+	{
+		if((playcarvw[vehicleid] >= 0 && playcarvw[vehicleid] <= 990) ||
+		(playcarvw[vehicleid] >= 18001 && playcarvw[vehicleid] <= 18005))
+		{
+			SetVehicleVirtualWorld(vehicleid, playcarvw[vehicleid]);//установить транспорту виртуальный мир игрока
+		}
+	}
 	return 1;
 }
 
@@ -13825,6 +13840,10 @@ public OnPlayerCommandText(playerid, cmdtext[])
 			new model, car22;
 			model = GetVehicleModel(carid);
 			car22 = DestroyVehicle(carid);
+			if(car22 == 1)
+			{
+				playcarvw[carid] = -100;//обнулить виртуальный мир транспорта игрока
+			}
 			if(car22 == 0)
 			{
 				SendClientMessage(playerid, COLOR_RED, " Такого [ид транспорта] на сервере нет !");
@@ -15792,6 +15811,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 			carid2 = CreateVehicle(car, X+3,Y+3,Z+1, 0.0, color1, color2, 90000);
 			LinkVehicleToInterior(carid2, GetPlayerInterior(playerid));//подключить транспорт к интерьеру игрока
 			SetVehicleVirtualWorld(carid2, GetPlayerVirtualWorld(playerid));//установить транспорту виртуальный мир игрока
+			playcarvw[carid2] = GetPlayerVirtualWorld(playerid);//сохранить виртуальный мир транспорта игрока
 			format(string, sizeof(string), " *** Админ %s создал транспорт   ID: %d   Модель: %d .", RealName[playerid], carid2, car);
 			print(string);
 			format(string, sizeof(string), " Транспорт создан !   ID: %d   Модель: %d", carid2, car);
@@ -19399,6 +19419,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 					if(migalka[player[playerid]][0] != 0) { DestroyObject(migalka[player[playerid]][0]); }//убрать мигалку
 					migalka[player[playerid]][0] = 0;//присваиваем мигалке несуществующий номер объекта
 					migalka[player[playerid]][1] = 0;//несуществующий ид транспорта с мигалкой
+					playcarvw[playcar[player[playerid]]] = -100;//обнулить виртуальный мир транспорта игрока
 					DestroyVehicle(playcar[player[playerid]]);//уничтожить свой транспорт
 					playcar[player[playerid]] = 0;//несуществующий ид транспорта
 				}
@@ -22453,6 +22474,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 							migalka[i][1] = 0;//несуществующий ид транспорта с мигалкой
 						}
 					}
+					playcarvw[car] = -100;//обнулить виртуальный мир транспорта игрока
 					DestroyVehicle(car);
 				}
 				else
@@ -29424,11 +29446,14 @@ public VehicSecSpawn(playerid, vehid, vehcol1, vehcol2, dispz)
 	{
 		GetPlayerFacingAngle(playerid, Angle);
 	}
+	new plvw;
+	plvw = GetPlayerVirtualWorld(playerid);
 	if(playcar[playerid] == 0)//если у игрока нет своего транспорта, то:
 	{
 		playcar[playerid] = CreateVehicle(vehid, x, y, z+dispz, Angle, vehcol1, vehcol2, 90000);//создать новый транспорт
 		LinkVehicleToInterior(playcar[playerid], GetPlayerInterior(playerid));//подключить транспорт к интерьеру игрока
-		SetVehicleVirtualWorld(playcar[playerid], GetPlayerVirtualWorld(playerid));//установить транспорту виртуальный мир игрока
+		SetVehicleVirtualWorld(playcar[playerid], plvw);//установить транспорту виртуальный мир игрока
+		playcarvw[playcar[playerid]] = plvw;//сохранить виртуальный мир транспорта игрока
 		PutPlayerInVehicle(playerid, playcar[playerid], 0);//посадить игрока на место водителя
 	}else{//иначе: (если у игрока ЕСТЬ свой транспорт)
 		new dopper = 0;
@@ -29446,10 +29471,12 @@ public VehicSecSpawn(playerid, vehid, vehcol1, vehcol2, dispz)
 		if(playcar[playerid] == neon[playerid][2])//если у игрока установлен свой неон на транспорте, то:
 		{
 			EnterTick33[playerid] = 1;//обход антикрашера - 3
+			playcarvw[playcar[playerid]] = -100;//обнулить виртуальный мир транспорта игрока
 			DestroyVehicle(playcar[playerid]);//удалить старый транспорт
 			playcar[playerid] = CreateVehicle(vehid, x, y, z+dispz, Angle, vehcol1, vehcol2, 90000);//создать новый транспорт
 			LinkVehicleToInterior(playcar[playerid], GetPlayerInterior(playerid));//подключить транспорт к интерьеру игрока
-			SetVehicleVirtualWorld(playcar[playerid], GetPlayerVirtualWorld(playerid));//установить транспорту виртуальный мир игрока
+			SetVehicleVirtualWorld(playcar[playerid], plvw);//установить транспорту виртуальный мир игрока
+			playcarvw[playcar[playerid]] = plvw;//сохранить виртуальный мир транспорта игрока
 			PutPlayerInVehicle(playerid, playcar[playerid], 0);//посадить игрока на место водителя
 			AttachObjectToVehicle(neon[playerid][0], playcar[playerid], -0.8, 0.0, -0.70, 0.0, 0.0, 0.0);//прикрепить неон к транспорту
 			AttachObjectToVehicle(neon[playerid][1], playcar[playerid], 0.8, 0.0, -0.70, 0.0, 0.0, 0.0);//прикрепить неон к транспорту
@@ -29471,10 +29498,12 @@ public VehicSecSpawn(playerid, vehid, vehcol1, vehcol2, dispz)
 			EnterTick33[playerid] = 1;//обход антикрашера - 3
 			if(dopper22 != -600)//если был найден чужой неон на транспорте игрока, то:
 			{
+				playcarvw[playcar[playerid]] = -100;//обнулить виртуальный мир транспорта игрока
 				DestroyVehicle(playcar[playerid]);//удалить старый транспорт
 				playcar[playerid] = CreateVehicle(vehid, x, y, z+dispz, Angle, vehcol1, vehcol2, 90000);//создать новый транспорт
 				LinkVehicleToInterior(playcar[playerid], GetPlayerInterior(playerid));//подключить транспорт к интерьеру игрока
-				SetVehicleVirtualWorld(playcar[playerid], GetPlayerVirtualWorld(playerid));//установить транспорту виртуальный мир игрока
+				SetVehicleVirtualWorld(playcar[playerid], plvw);//установить транспорту виртуальный мир игрока
+				playcarvw[playcar[playerid]] = plvw;//сохранить виртуальный мир транспорта игрока
 				PutPlayerInVehicle(playerid, playcar[playerid], 0);//посадить игрока на место водителя
 				AttachObjectToVehicle(neon[dopper22][0], playcar[playerid], -0.8, 0.0, -0.70, 0.0, 0.0, 0.0);//прикрепить неон к транспорту
 				AttachObjectToVehicle(neon[dopper22][1], playcar[playerid], 0.8, 0.0, -0.70, 0.0, 0.0, 0.0);//прикрепить неон к транспорту
@@ -29482,10 +29511,12 @@ public VehicSecSpawn(playerid, vehid, vehcol1, vehcol2, dispz)
 			}
 			else//иначе: (если НЕ был найден чужой неон на транспорте игрока)
 			{
+				playcarvw[playcar[playerid]] = -100;//обнулить виртуальный мир транспорта игрока
 				DestroyVehicle(playcar[playerid]);//удалить старый транспорт
 				playcar[playerid] = CreateVehicle(vehid, x, y, z+dispz, Angle, vehcol1, vehcol2, 90000);//создать новый транспорт
 				LinkVehicleToInterior(playcar[playerid], GetPlayerInterior(playerid));//подключить транспорт к интерьеру игрока
-				SetVehicleVirtualWorld(playcar[playerid], GetPlayerVirtualWorld(playerid));//установить транспорту виртуальный мир игрока
+				SetVehicleVirtualWorld(playcar[playerid], plvw);//установить транспорту виртуальный мир игрока
+				playcarvw[playcar[playerid]] = plvw;//сохранить виртуальный мир транспорта игрока
 				PutPlayerInVehicle(playerid, playcar[playerid], 0);//посадить игрока на место водителя
 			}
 		}
@@ -30482,6 +30513,7 @@ public DestrCar(playerid)
 		if(migalka[playerid][0] != 0) { DestroyObject(migalka[playerid][0]); }//убрать мигалку
 		migalka[playerid][0] = 0;//присваиваем мигалке несуществующий номер объекта
 		migalka[playerid][1] = 0;//несуществующий ид транспорта с мигалкой
+		playcarvw[playcar[playerid]] = -100;//обнулить виртуальный мир транспорта игрока
 		DestroyVehicle(playcar[playerid]);//уничтожить свой транспорт
 		playcar[playerid] = 0;//несуществующий ид транспорта
 	}
