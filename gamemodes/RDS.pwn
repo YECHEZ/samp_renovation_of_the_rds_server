@@ -11681,7 +11681,14 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		(GetPlayerInterior(playerid) == 15 || GetPlayerInterior(playerid) == 14)) { dopper1 = 1; }//меркерная переменная = 1
 		if(dopper1 == 0 && GetPlayerInterior(playerid) != 0)//если игрок НЕ в дерби зонах, И в доме (или другом интерьере) то:
 		{
-			SendClientMessage(playerid, COLOR_RED, " В домах и других интерьерах эта команда не работает !");
+			SendClientMessage(playerid, COLOR_RED, " Команда работает только на основной карте, или в ДТ мирах !");
+			return 1;
+		}
+		new plvw;
+		plvw = GetPlayerVirtualWorld(playerid);
+		if(plvw < 0 || plvw > 990)
+		{
+			SendClientMessage(playerid, COLOR_RED, " Команда работает только на основной карте, или в ДТ мирах !");
 			return 1;
 		}
 		tmp = strtok(cmdtext, idx);
@@ -11698,7 +11705,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		}
 		if(ii > 0)
 		{
-			if(ii == GetPlayerVirtualWorld(playerid))
+			if(ii == plvw)
 			{
 				format(string, sizeof(string), " Вы уже находитесь в %d виртуальном мире !!!", ii);
 				SendClientMessage(playerid, COLOR_RED, string);
@@ -11716,7 +11723,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 						if(GetPlayerVehicleID(i) == carpl && playerid != i)//если игрок в авто инициатора, то:
 						{//установить пассажирам интерьер и виртуальный мир игрока
 							SetPlayerInterior(i, GetPlayerInterior(playerid));
-							SetPlayerVirtualWorld(i, GetPlayerVirtualWorld(playerid));
+							SetPlayerVirtualWorld(i, ii);
 							format(string, sizeof(string), "Russian_Drift: {00FF00}Ваш виртуальный мир был изменён на {FF0000}%d {00FF00}(Вы в режиме дрифт тренировки)", ii);
 							SendClientMessage(i, COLOR_YELLOW, string);
 							SendClientMessage(i, COLOR_GREEN, "Для отключения режима дрифт тренировки используйте команду: {FF0000}/dt 0");
@@ -11724,7 +11731,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 					}
 				}
 				LinkVehicleToInterior(carpl, GetPlayerInterior(playerid));//подключить транспорт к интерьеру игрока
-				SetVehicleVirtualWorld(carpl, GetPlayerVirtualWorld(playerid));//установить транспорту виртуальный мир игрока
+				SetVehicleVirtualWorld(carpl, ii);//установить транспорту виртуальный мир игрока
 			}
 			format(string, sizeof(string), "Russian_Drift: {00FF00}Ваш виртуальный мир был изменён на {FF0000}%d {00FF00}(Вы в режиме дрифт тренировки)", ii);
 			SendClientMessage(playerid, COLOR_YELLOW, string);
@@ -11732,7 +11739,7 @@ public OnPlayerCommandText(playerid, cmdtext[])
 		}
 		else
 		{
-			if(ii == GetPlayerVirtualWorld(playerid))
+			if(ii == plvw)
 			{
 				SendClientMessage(playerid, COLOR_RED, " У Вас уже выключен режим дрифт тренировки !!!");
 				return 1;
@@ -11749,13 +11756,13 @@ public OnPlayerCommandText(playerid, cmdtext[])
 						if(GetPlayerVehicleID(i) == carpl && playerid != i)//если игрок в авто инициатора, то:
 						{//установить пассажирам интерьер и виртуальный мир игрока
 							SetPlayerInterior(i, GetPlayerInterior(playerid));
-							SetPlayerVirtualWorld(i, GetPlayerVirtualWorld(playerid));
+							SetPlayerVirtualWorld(i, ii);
 							SendClientMessage(i, COLOR_YELLOW, "Russian_Drift: {FF0000}Режим дрифт тренировки был выключен");
 						}
 					}
 				}
 				LinkVehicleToInterior(carpl, GetPlayerInterior(playerid));//подключить транспорт к интерьеру игрока
-				SetVehicleVirtualWorld(carpl, GetPlayerVirtualWorld(playerid));//установить транспорту виртуальный мир игрока
+				SetVehicleVirtualWorld(carpl, ii);//установить транспорту виртуальный мир игрока
 			}
 			SendClientMessage(playerid, COLOR_YELLOW, "Russian_Drift: {FF0000}Режим дрифт тренировки выключен");
 		}
@@ -18507,6 +18514,17 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 
 					return 1;
 				}
+				if(PlayerInfo[playerid][pAdmin] <= 4 && GetPlayerInterior(playerid) == 3)
+				{
+					SendClientMessage(playerid, COLOR_YELLOW, "Russian_Drift: {FF0000}Чтобы выбрать транспорт в данном интерьере,");
+					SendClientMessage(playerid, COLOR_YELLOW, "Russian_Drift: {FF0000}Вы должны быть админом 5 лвл или выше !");
+
+					//Gangs system
+					ShowPlayerDialog(playerid, 4, DIALOG_STYLE_LIST, "Игровое меню", "Тюнинг\nТелепорты\nАнимации\nТранспорт\nУправление персонажем\nПокупка оружия\nДеадМатчи\nПомощь\n{FFFF00}Радио\n{00FF00}Настройки\n{E03515}Управление транспортом\nСистема банд", "Выбрать", "Выход");
+					SetPVarInt(playerid, "DlgCont", 4);
+
+					return 1;
+				}
 				ShowPlayerDialog(playerid, 11, DIALOG_STYLE_LIST, "Транспорт", "{00FF00}Elegy\nSultan\nInfernus\nBanshee\nBuffalo\
 				\nCheetah\nTurismo\nUranus\nBullet\nJester\nPhoenix\nSuper GT\nFlash\nZR-350\nHuntley\nStretch\nBus\nMonster\
 				\nPolice Los Santos\nTaxi\nNRG-500\nSanchez\nKart\nBMX\nMountain Bike\nMaverick\nShamal\nBeagle\nJetmax", "OK", "Назад");
@@ -18710,7 +18728,6 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 						GetPlayerPos(playerid,PosX,PosY,PosZ);
 						SetPlayerPos(playerid,PosX+3,PosY+3,PosZ+5);
 					}
-					tpdrift[playerid] = 1;
 			    	if(PlayerInfo[playerid][pAdmin] >= 1)
 					{
 						format(string,256," *** Админ %s телепортировался к игроку %s",RealName[playerid],RealName[player[playerid]]);
@@ -18721,8 +18738,21 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 						format(string,256," Полицейский %s телепортировался к игроку %s",RealName[playerid],RealName[player[playerid]]);
 						print(string);
 					}
+					new plvw22, plvw33;
+					plvw22 = GetPlayerVirtualWorld(playerid);
+					plvw33 = GetPlayerVirtualWorld(player[playerid]);
+					if((plvw22 < 1 || plvw22 > 990) && (plvw33 >= 1 && plvw33 <= 990))
+					{
+						SendClientMessage(playerid, COLOR_RED, " * Вы ТП в ДТ мир ! Для выхода используйте: /dt 0 !");
+					}
+					if((plvw22 < 18001 || plvw22 > 18005) && (plvw33 >= 18001 && plvw33 <= 18005))
+					{
+						SendClientMessage(playerid, COLOR_RED, " * Вы ТП в ДМ мир ! Для выхода используйте:");
+						SendClientMessage(playerid, COLOR_RED, " * меню, ДеадМатчи, Выйти из DM мира !");
+					}
+					tpdrift[playerid] = 1;
 					SetPlayerInterior(playerid, GetPlayerInterior(player[playerid]));
-					SetPlayerVirtualWorld(playerid, GetPlayerVirtualWorld(player[playerid]));
+					SetPlayerVirtualWorld(playerid, plvw33);
 					GetPlayerPos(player[playerid], PosX, PosY, PosZ);
 					SetPlayerPos(playerid, PosX, PosY+1, PosZ+1);
 				}
@@ -18748,19 +18778,43 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 					}
 					if(dopper3 == 0 && dopper4 == 1)//если игрок телепортируется НЕ С дерби НА дерби, то:
 					{
+						new plvw22, plvw33;
+						plvw22 = GetPlayerVirtualWorld(playerid);
+						plvw33 = GetPlayerVirtualWorld(player[playerid]);
+						if((plvw22 < 1 || plvw22 > 990) && (plvw33 >= 1 && plvw33 <= 990))
+						{
+							SendClientMessage(playerid, COLOR_RED, " * Вы ТП в ДТ мир ! Для выхода используйте: /dt 0 !");
+						}
+						if((plvw22 < 18001 || plvw22 > 18005) && (plvw33 >= 18001 && plvw33 <= 18005))
+						{
+							SendClientMessage(playerid, COLOR_RED, " * Вы ТП в ДМ мир ! Для выхода используйте:");
+							SendClientMessage(playerid, COLOR_RED, " * меню, ДеадМатчи, Выйти из DM мира !");
+						}
 						tpdrift[playerid] = 1;
 						SetPlayerInterior(playerid, GetPlayerInterior(player[playerid]));
-						SetPlayerVirtualWorld(playerid, GetPlayerVirtualWorld(player[playerid]));
+						SetPlayerVirtualWorld(playerid, plvw33);
 						GetPlayerPos(player[playerid], PosX, PosY, PosZ);
 						SetPlayerPos(playerid, PosX, PosY+1, PosZ+1);
 					}
 					else//если игрок телепортируется в любом направлении, ЗА ИСКЛЮЧЕНИЕМ "НЕ С дерби НА дерби", то:
 					{
+						new plvw22, plvw33;
+						plvw22 = GetPlayerVirtualWorld(playerid);
+						plvw33 = GetPlayerVirtualWorld(player[playerid]);
+						if((plvw22 < 1 || plvw22 > 990) && (plvw33 >= 1 && plvw33 <= 990))
+						{
+							SendClientMessage(playerid, COLOR_RED, " * Вы ТП в ДТ мир ! Для выхода используйте: /dt 0 !");
+						}
+						if((plvw22 < 18001 || plvw22 > 18005) && (plvw33 >= 18001 && plvw33 <= 18005))
+						{
+							SendClientMessage(playerid, COLOR_RED, " * Вы ТП в ДМ мир ! Для выхода используйте:");
+							SendClientMessage(playerid, COLOR_RED, " * меню, ДеадМатчи, Выйти из DM мира !");
+						}
 						if(GetPlayerState(playerid) == 2)//если игрок на месте водителя, то:
 						{
 							new regm = 1, per1, per2, Float:per3, Float:cor1, Float:cor2, Float:cor3;
 	 						per1 = GetPlayerInterior(player[playerid]);
-							per2 = GetPlayerVirtualWorld(player[playerid]);
+							per2 = plvw33;
 	   						GetPlayerPos(player[playerid], PosX, PosY, PosZ);
 							cor1 = PosX;
 							cor2 = PosY+1;
@@ -18771,7 +18825,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 						{
 							tpdrift[playerid] = 1;
 	 						SetPlayerInterior(playerid, GetPlayerInterior(player[playerid]));
-							SetPlayerVirtualWorld(playerid, GetPlayerVirtualWorld(player[playerid]));
+							SetPlayerVirtualWorld(playerid, plvw33);
 	   						GetPlayerPos(player[playerid], PosX, PosY, PosZ);
 							SetPlayerPos(playerid, PosX, PosY+1, PosZ+1);
 						}
@@ -29379,14 +29433,18 @@ public VehicSpawnKK(playerid, vehid, vehcol1, vehcol2, dispz)
 	}
 	new plvw;
 	plvw = GetPlayerVirtualWorld(playerid);
-	if((plvw >= 0 && plvw <= 16999) || plvw >= 18000)
+	if(plvw > 16999 && plvw < 18000)
 	{
-		VehicSpawn(playerid, vehid, vehcol1, vehcol2, dispz);
+		SendClientMessage(playerid, COLOR_YELLOW, "Russian_Drift: {FF0000}В DM-зонах НЕТ возможности спавна транспорта !");
+		return 1;
 	}
-	else
+	if(PlayerInfo[playerid][pAdmin] <= 4 && GetPlayerInterior(playerid) == 3)
 	{
-		SendClientMessage(playerid, COLOR_YELLOW, "Russian_Drift: {FF0000}В DM-зонах НЕТ возможности выбора транспорта !");
+		SendClientMessage(playerid, COLOR_YELLOW, "Russian_Drift: {FF0000}Чтобы взять транспорт в данном интерьере,");
+		SendClientMessage(playerid, COLOR_YELLOW, "Russian_Drift: {FF0000}Вы должны быть админом 5 лвл или выше !");
+		return 1;
 	}
+	VehicSpawn(playerid, vehid, vehcol1, vehcol2, dispz);
 	return 1;
 }
 
@@ -30609,52 +30667,70 @@ public TelPort(playerid,regm,per1,per2,Float:per3,Float:cor1,Float:cor2,Float:co
 	}
 	if(regm == 1)
 	{
-		SetPlayerInterior(playerid, per1);//телепортировать
-		SetPlayerVirtualWorld(playerid, per2);
-		new VID = GetPlayerVehicleID(playerid);
-		new Float:angle;
-		LinkVehicleToInterior(VID, per1);//подключить транспорт к ТП интерьеру
-		SetVehicleVirtualWorld(VID, per2);//установить транспорту виртуальный мир игрока
-		for(new i = 0; i < MAX_PLAYERS; i++)
+		if(PlayerInfo[playerid][pAdmin] <= 4 && per1 == 3)
+		{//если игрок - админ 4 лвл или ниже, И ТП в интерьер тюрьмы то:
+			SetPlayerInterior(playerid, per1);//тп БЕЗ транспорта
+			SetPlayerVirtualWorld(playerid, per2);
+			SetPlayerPos(playerid, cor1, cor2, cor3);
+		}
+		else//иначе:
 		{
-			if(IsPlayerConnected(i))
+			SetPlayerInterior(playerid, per1);//телепортировать
+			SetPlayerVirtualWorld(playerid, per2);
+			new VID = GetPlayerVehicleID(playerid);
+			new Float:angle;
+			LinkVehicleToInterior(VID, per1);//подключить транспорт к ТП интерьеру
+			SetVehicleVirtualWorld(VID, per2);//установить транспорту виртуальный мир игрока
+			for(new i = 0; i < MAX_PLAYERS; i++)
 			{
-				if(GetPlayerVehicleID(i) == VID && i != playerid)
-				{//установить пассажирам интерьер и виртуальный мир игрока
-					SetPlayerInterior(i, per1);
-					SetPlayerVirtualWorld(i, per2);
+				if(IsPlayerConnected(i))
+				{
+					if(GetPlayerVehicleID(i) == VID && i != playerid)
+					{//установить пассажирам интерьер и виртуальный мир игрока
+						SetPlayerInterior(i, per1);
+						SetPlayerVirtualWorld(i, per2);
+					}
 				}
 			}
+			SetVehiclePos(VID, cor1, cor2, cor3);
+			GetVehicleZAngle(VID, angle);//флипнуть
+			SetVehicleZAngle(VID, angle);
+			SetPlayerPos(playerid, cor1, cor2, cor3);
+			PutPlayerInVehicle(playerid, VID, 0);
 		}
-		SetVehiclePos(VID, cor1, cor2, cor3);
-		GetVehicleZAngle(VID, angle);//флипнуть
-		SetVehicleZAngle(VID, angle);
-		SetPlayerPos(playerid, cor1, cor2, cor3);
-		PutPlayerInVehicle(playerid, VID, 0);
 		return 1;
 	}
 	if(regm == 2)
 	{
-		SetPlayerInterior(playerid, per1);//телепортировать с углом авто
-		SetPlayerVirtualWorld(playerid, per2);
-		new VID = GetPlayerVehicleID(playerid);
-		LinkVehicleToInterior(VID, per1);//подключить транспорт к ТП интерьеру
-		SetVehicleVirtualWorld(VID, per2);//установить транспорту виртуальный мир игрока
-		for(new i = 0; i < MAX_PLAYERS; i++)
+		if(PlayerInfo[playerid][pAdmin] <= 4 && per1 == 3)
+		{//если игрок - админ 4 лвл или ниже, И ТП в интерьер тюрьмы то:
+			SetPlayerInterior(playerid, per1);//тп БЕЗ транспорта
+			SetPlayerVirtualWorld(playerid, per2);
+			SetPlayerPos(playerid, cor1, cor2, cor3);
+		}
+		else//иначе:
 		{
-			if(IsPlayerConnected(i))
+			SetPlayerInterior(playerid, per1);//телепортировать с углом авто
+			SetPlayerVirtualWorld(playerid, per2);
+			new VID = GetPlayerVehicleID(playerid);
+			LinkVehicleToInterior(VID, per1);//подключить транспорт к ТП интерьеру
+			SetVehicleVirtualWorld(VID, per2);//установить транспорту виртуальный мир игрока
+			for(new i = 0; i < MAX_PLAYERS; i++)
 			{
-				if(GetPlayerVehicleID(i) == VID && i != playerid)
-				{//установить пассажирам интерьер и виртуальный мир игрока
-					SetPlayerInterior(i, per1);
-					SetPlayerVirtualWorld(i, per2);
+				if(IsPlayerConnected(i))
+				{
+					if(GetPlayerVehicleID(i) == VID && i != playerid)
+					{//установить пассажирам интерьер и виртуальный мир игрока
+						SetPlayerInterior(i, per1);
+						SetPlayerVirtualWorld(i, per2);
+					}
 				}
 			}
+			SetVehiclePos(VID, cor1, cor2, cor3);
+			SetVehicleZAngle(VID, per3);
+			SetPlayerPos(playerid, cor1, cor2, cor3);
+			PutPlayerInVehicle(playerid, VID, 0);
 		}
-		SetVehiclePos(VID, cor1, cor2, cor3);
-		SetVehicleZAngle(VID, per3);
-		SetPlayerPos(playerid, cor1, cor2, cor3);
-		PutPlayerInVehicle(playerid, VID, 0);
 	}
 	return 1;
 }
@@ -34174,7 +34250,7 @@ public ShowStats(playerid,targetid)
 		{
 			case 0: format(coordsstring, sizeof(coordsstring)," Депортация: [%d] Приём PM от игроков: [%d] Меню: [%s] Сканиров. команд сервера: [%d] Розыск: [%d] Виртуал. мир: [%d] - ошибка !!!",PlayerInfo[targetid][pDeport],PlayerInfo[targetid][pRecPM],locper,PlayerInfo[targetid][pAdmscancom],PlayerInfo[targetid][pWanted],plvw);
 			case 1: format(coordsstring, sizeof(coordsstring)," Депортация: [%d] Приём PM от игроков: [%d] Меню: [%s] Сканиров. команд сервера: [%d] Розыск: [%d] Виртуал. мир: [%d] - основной.",PlayerInfo[targetid][pDeport],PlayerInfo[targetid][pRecPM],locper,PlayerInfo[targetid][pAdmscancom],PlayerInfo[targetid][pWanted],plvw);
-			case 2: format(coordsstring, sizeof(coordsstring)," Депортация: [%d] Приём PM от игроков: [%d] Меню: [%s] Сканиров. команд сервера: [%d] Розыск: [%d] Виртуал. мир: [%d] - ДТ.",PlayerInfo[targetid][pDeport],PlayerInfo[targetid][pRecPM],locper,PlayerInfo[targetid][pAdmscancom],PlayerInfo[targetid][pWanted],plvw);
+			case 2: format(coordsstring, sizeof(coordsstring)," Депортация: [%d] Приём PM от игроков: [%d] Меню: [%s] Сканиров. команд сервера: [%d] Розыск: [%d] Виртуал. мир: [%d] - ДТ миры.",PlayerInfo[targetid][pDeport],PlayerInfo[targetid][pRecPM],locper,PlayerInfo[targetid][pAdmscancom],PlayerInfo[targetid][pWanted],plvw);
 			case 3: format(coordsstring, sizeof(coordsstring)," Депортация: [%d] Приём PM от игроков: [%d] Меню: [%s] Сканиров. команд сервера: [%d] Розыск: [%d] Виртуал. мир: [%d] - дома.",PlayerInfo[targetid][pDeport],PlayerInfo[targetid][pRecPM],locper,PlayerInfo[targetid][pAdmscancom],PlayerInfo[targetid][pWanted],plvw);
 			case 4: format(coordsstring, sizeof(coordsstring)," Депортация: [%d] Приём PM от игроков: [%d] Меню: [%s] Сканиров. команд сервера: [%d] Розыск: [%d] Виртуал. мир: [%d] - МП.",PlayerInfo[targetid][pDeport],PlayerInfo[targetid][pRecPM],locper,PlayerInfo[targetid][pAdmscancom],PlayerInfo[targetid][pWanted],plvw);
 			case 5: format(coordsstring, sizeof(coordsstring)," Депортация: [%d] Приём PM от игроков: [%d] Меню: [%s] Сканиров. команд сервера: [%d] Розыск: [%d] Виртуал. мир: [%d] - гаражи.",PlayerInfo[targetid][pDeport],PlayerInfo[targetid][pRecPM],locper,PlayerInfo[targetid][pAdmscancom],PlayerInfo[targetid][pWanted],plvw);
